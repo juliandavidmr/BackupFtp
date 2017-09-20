@@ -51,7 +51,7 @@ def downloadRecursive(ruta):
     global numErrors
     # Nos movemos a la ruta en el servidor
     ftp.cwd(ruta)
-    print 'En ruta:', ruta
+    print 'Actual route:', ruta
     initialList = []
     ftp.dir(initialList.append)
     # print "Lista inicial:", initialList
@@ -106,8 +106,8 @@ def downloadRecursive(ruta):
     '''
     Listamos los elementos a trabajar de la ruta actual
     '''
-    print('\tLista de Archivos: ' + str(listFiles))
-    print('\tLista de Carpetas: ' + str(listFolders))
+    # print('\tLista de Archivos: ' + str(listFiles))
+    # print('\tLista de Carpetas: ' + str(listFolders))
 
     '''
     Si la ruta actual no tiene su equivalente local, creamos la carpeta a nivel local
@@ -140,6 +140,6 @@ def downloadRecursive(ruta):
 
 
 # Main
-print 'Comienza la ejecucion del backup de sitio web ', HOST
+print 'Run backup FTP', HOST
 connect()
 downloadRecursive(ruta)
