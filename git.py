@@ -20,6 +20,10 @@ class cd:
 
 
 def execute(cmd):
+    """
+    Execute command
+    https://stackoverflow.com/a/95246/5125608
+    """
     return subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
 
@@ -73,5 +77,3 @@ def commit(dirfolder, msg):
         p = execute("git push -u origin master")
         print "[GIT]\t", "Push", ''.join(p.stdout.readlines())
 
-
-commit("backup", "Hola")

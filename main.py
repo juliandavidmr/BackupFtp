@@ -1,44 +1,28 @@
 # -*- coding: utf-8 -*-
 '''
- # Copyright 2014 Pablo Toledo.
- #
- # Licensed under the Apache License, Version 2.0 (the "License");
- # you may not use this file except in compliance with the License.
- # You may obtain a copy of the License at
- #
- #      http://www.apache.org/licenses/LICENSE-2.0
- #
- # Unless required by applicable law or agreed to in writing, software
- # distributed under the License is distributed on an "AS IS" BASIS,
- # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- # See the License for the specific language governing permissions and
- # limitations under the License.
- Autor inicial:
     @author: juanpablotoledogavagnin
- Mantenido por:
-    juliandavidmr <https://github.com/juliandavidmr>
+    Maintained by:
+        juliandavidmr <https://github.com/juliandavidmr>
 '''
-
-from __future__ import with_statement
 import os
 from ftplib import FTP
+import time
+import git
+from conf import config
 
-# Var Globals configurations
-HOST = 'localhost'
-PORT = 54218
-USER = 'GeekPrueba'
-PASS = ''
-ruta = "\\"
-destino = os.getcwd() + "\\backup"
 ftp = FTP()
 
 # Vars globals logs
 listErrors = []
 numErrors = 0
+numFolders = 0
+numFiles = 0
+log = open(os.path.join(os.getcwd(), 'logFTP.log'), 'w')
+
 
 def connect():
-    ftp.connect(HOST, PORT)
-    ftp.login(USER, PASS)
+    ftp.connect(config.get("host"), config.get("port"))
+    ftp.login(config.get("user"), config.get("pass"))
     print('Connected to server')
     print(str(ftp.welcome))
     return
@@ -46,9 +30,10 @@ def connect():
 
 def downloadRecursive(ruta):
     """
-    Dowload files recursive
+    Download files recursive
     """
-    global numErrors
+    global numErrors, numFolders, numFiles
+    global log
     # Nos movemos a la ruta en el servidor
     ftp.cwd(ruta)
     print 'Actual route:', ruta
@@ -90,11 +75,16 @@ def downloadRecursive(ruta):
             name += a + " "
         name = name.strip()
         if elemento[0].startswith('d'):
-            # print "Carpeta: ", name
+            # print "Folder: ", name
             listFolders.append(name)
         else:
             # print "File:", name.decode('utf-8')
             listFiles.append(name)
+
+    # Fill num files and folders
+    numFiles += len(listFiles)
+    numFolders += len(listFolders)
+
     '''
     Eliminamos de la lista de carpetas . y .. para evitar bucles por el servidor
     '''
@@ -112,21 +102,23 @@ def downloadRecursive(ruta):
     '''
     Si la ruta actual no tiene su equivalente local, creamos la carpeta a nivel local
     '''
-    if not os.path.exists(destino + ruta):
-        os.makedirs(destino + ruta)
+    if not os.path.exists(config.get("dest") + ruta):
+        os.makedirs(config.get("dest") + ruta)
     '''
     Los elementos de la lista de archivo se proceden a descargar de forma secuencial en la ruta
     '''
     for elemento in listFiles:
-        print('\tDescargando ' + elemento + ' en ' + destino + ruta)
+        print('\tDescargando ' + elemento + ' en ' + config.get("dest") + ruta)
         try:
             ftp.retrbinary(
-                "RETR " + elemento, open(os.path.join(destino + ruta, elemento.decode('utf-8')), "wb").write)
+                "RETR " + elemento, open(os.path.join(config.get("dest") + ruta, elemento.decode('utf-8')), "wb").write)
+            # listFiles.remove(elemento)
         except:
-            print('Error al descargar ' + elemento +
-                  ' ubicado en ' + destino + ruta)
+            ex = 'Error al descargar ' + elemento + \
+                ' ubicado en ' + config.get("dest") + ruta
+            print ex
             listErrors.append('Archivo ' + elemento +
-                                ' ubicado en ' + destino + ruta)
+                              ' ubicado en ' + config.get("dest") + ruta)
             numErrors += 1
     '''
     Una vez se termina de descargar los archivos invocamos el metodo actual provocando una solucion
@@ -136,10 +128,29 @@ def downloadRecursive(ruta):
     for elemento in listFolders:
         # elemento = elemento[2:len(elemento) - 2]
         downloadRecursive(ruta + elemento + "\\")
+
     return
 
 
+def prepareLog():
+    global numErrors, log, listErrors
+    print 'Errors detected = ', str(numErrors)
+    log.write('Errors detected = ' + str(numErrors))
+    for el in listErrors:
+        log.write(str(el))
+
+
 # Main
-print 'Run backup FTP', HOST
+print 'Run backup FTP', config.get("host")
 connect()
-downloadRecursive(ruta)
+downloadRecursive(config.get("route"))
+prepareLog()
+
+# Create commit & push
+msgcommit = ", ".join([
+    str(int(time.time())),
+    str(numErrors) + " Errors",
+    str(numFiles) + " Files",
+    str(numFolders) + " Folders"])
+print "[GIT]\tPrepare commit", msgcommit
+git.commit(config.get("folderdest"), msgcommit)
