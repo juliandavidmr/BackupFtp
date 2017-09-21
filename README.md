@@ -3,7 +3,9 @@
 Create automatic ftp backup and upload to gitlab
 
 - [x] Sync files and folders locally from remote ftp
-- [ ] Upload changes to gitlab
+- [x] Automatic commit
+- [x] Upload changes to gitlab, github
+- [x] Generate error log file
 
 # Usage
 
@@ -13,4 +15,6 @@ cd BackupFtp
 python main.py
 ```
 
-_Tested with python v2.7.13_
+> Configure the FTP credentials in the [conf](conf.py) file
+
+_Successfully tested with python v2.7.13_
